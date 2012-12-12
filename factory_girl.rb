@@ -26,7 +26,7 @@ module FactoryGirl
 
 end
 
-class CleanRoom
+class CleanRoom < BasicObject
 	
 	def factory(name, &block)
 		@factory = Factory.new(name)
