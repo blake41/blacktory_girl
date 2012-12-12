@@ -1,7 +1,6 @@
 require 'debugger'
-require 'forwardable'
+
 module FactoryGirl
-	extend Forwardable
 
 	def self.configuration
 		@configuration ||= Configuration.new
@@ -9,7 +8,6 @@ module FactoryGirl
 
 	def self.define(&block)
 		cr = CleanRoom.new
-		debugger
 		cr.instance_eval(&block)
 	end
 
@@ -35,23 +33,26 @@ class Factory
 		@name = name
 	end
 
-	def declare_method(attr_name, value)
-		set_value(attr_name, value)
+	def declare_method(attr_name, value, proc)
+		set_value(attr_name, value, proc)
 		self.class.class_eval do
 			define_method("#{attr_name}") do
-				instance_variable_get("@#{attr_name}")
+				instance_variable_get("@#{attr_name}").send(:call)
 			end
 		end
 	end
 
-	def set_value(attr_name, value)
-		# if 
-		instance_variable_set("@#{attr_name}".to_sym, value)
+	def set_value(attr_name, value, proc)
+		if proc.is_a?(Proc) && value.nil?
+			instance_variable_set("@#{attr_name}".to_sym, proc)
+		else
+			instance_variable_set("@#{attr_name}".to_sym, Proc.new {value})
+		end
 	end
 
 end
 
-class CleanRoom < BasicObject
+class CleanRoom
 	
 	def factory(name, &block)
 		@factory = Factory.new(name)
@@ -60,8 +61,7 @@ class CleanRoom < BasicObject
 	end
 
 	def method_missing(method, *args, &block)
-		debugger
-		@factory.declare_method(method, args[0])
+		@factory.declare_method(method, args[0], block)
 	end
 end
 
@@ -86,3 +86,4 @@ end
 user = FactoryGirl.create(:user)
 puts user.first_name
 puts user.last_name
+puts user.height
