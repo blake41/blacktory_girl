@@ -9,6 +9,7 @@ module FactoryGirl
 
 	def self.define(&block)
 		cr = CleanRoom.new
+		debugger
 		cr.instance_eval(&block)
 	end
 
@@ -26,19 +27,6 @@ module FactoryGirl
 
 end
 
-class CleanRoom < BasicObject
-	
-	def factory(name, &block)
-		@factory = Factory.new(name)
-		block.call
-		FactoryGirl.register_factory(@factory)
-	end
-
-	def method_missing(method, *args, &block)
-		@factory.declare_method(method, args[0])
-	end
-end
-
 class Factory
 
 	attr_accessor :name
@@ -48,7 +36,7 @@ class Factory
 	end
 
 	def declare_method(attr_name, value)
-		instance_variable_set("@#{attr_name}".to_sym, value)
+		set_value(attr_name, value)
 		self.class.class_eval do
 			define_method("#{attr_name}") do
 				instance_variable_get("@#{attr_name}")
@@ -56,6 +44,25 @@ class Factory
 		end
 	end
 
+	def set_value(attr_name, value)
+		# if 
+		instance_variable_set("@#{attr_name}".to_sym, value)
+	end
+
+end
+
+class CleanRoom < BasicObject
+	
+	def factory(name, &block)
+		@factory = Factory.new(name)
+		block.call
+		FactoryGirl.register_factory(@factory)
+	end
+
+	def method_missing(method, *args, &block)
+		debugger
+		@factory.declare_method(method, args[0])
+	end
 end
 
 class Configuration
@@ -72,10 +79,10 @@ FactoryGirl.define do
 	factory :user do
 		first_name "blake"
 		last_name "johnson"
+		height { 5.to_i }
 	end
 end
 
 user = FactoryGirl.create(:user)
-debugger
 puts user.first_name
 puts user.last_name
