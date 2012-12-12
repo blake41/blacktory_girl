@@ -1,3 +1,4 @@
+Implementing an api like so:
 ```ruby
 FactoryGirl.define do 
 	factory :user do
